@@ -1,10 +1,10 @@
-#ifndef NODES_HXX
-#define NODES_HXX
+#ifndef NODES_HPP
+#define NODES_HPP
 
-#include "helpers.hxx"
-#include "types.hxx"
-#include "package.hxx"
-#include "storage_types.hxx"
+#include "helpers.hpp"
+#include "types.hpp"
+#include "package.hpp"
+#include "storage_types.hpp"
 
 #include <memory>
 #include <optional>
@@ -95,4 +95,4 @@ private:
 
 
 
-#endif //NODES_HXX
+#endif //NODES_HPP
