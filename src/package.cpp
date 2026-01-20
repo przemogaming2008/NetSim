@@ -1,4 +1,4 @@
-#include "package.hxx"
+#include "package.hpp"
 
 // statyczne definicje
 std::set<ElementID> Package::assigned_IDs;
