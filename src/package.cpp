@@ -1,4 +1,5 @@
-#include "package.hpp"
+#include "package.hxx"
+#include <stdexcept>
 
 // statyczne definicje
 std::set<ElementID> Package::assigned_IDs;
@@ -12,13 +13,12 @@ ElementID Package::get_next_id() {
         return id;
     }
 
-    ElementID id = 0;
-    if (!assigned_IDs.empty()) {
-        id = *assigned_IDs.rbegin() + 1;
+    if (assigned_IDs.empty()) {
+        return 1;
     }
-    return id;
-}
 
+    return *assigned_IDs.rbegin() + 1;
+}
 // Konstruktor bez ID
 Package::Package() : ID_(get_next_id()) {
     assigned_IDs.insert(ID_);
