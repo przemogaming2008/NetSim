@@ -1,4 +1,4 @@
-#include "package.hxx"
+#include "package.hpp"
 #include <stdexcept>
 
 // statyczne definicje

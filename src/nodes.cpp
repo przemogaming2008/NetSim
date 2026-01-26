@@ -2,56 +2,37 @@
 
 void ReceiverPreferences::add_receiver(IPackageReceiver* r)
 {
-    double num = double(preferences_t_.size());
-    if (num == 0)
+    preferences_t_[r] = 1.0;
+    double prob = 1.0 / preferences_t_.size();
+
+    for (auto& p : preferences_t_) 
     {
-        preferences_t_[r] = 1;
-    }
-    else
-    {
-        for (auto &receiver: preferences_t_)
-        {
-            receiver.second = 1 / (num + 1);
-        }
-        preferences_t_[r] = 1 / (num + 1);
+        p.second = prob;
     }
 }
 
 void ReceiverPreferences::remove_receiver(IPackageReceiver* r)
 {
-    double num = double(preferences_t_.size());
-    if (num > 1)
+    preferences_t_.erase(r);
+    if (!preferences_t_.empty()) 
     {
-        for (auto &receiver: preferences_t_)
+        double prob = 1.0 / preferences_t_.size();
+        for (auto& p : preferences_t_) 
         {
-            if (receiver.first != r)
-            {
-                receiver.second = 1 / (num - 1);
-            }
+            p.second = prob;
         }
     }
-    preferences_t_.erase(r);
 }
 
 IPackageReceiver* ReceiverPreferences::choose_receiver()
 {
-    auto probability = pg_();
-    if (probability >= 0 && probability <= 1)
+    double p = pg_();
+    double acc = 0.0;
+
+    for (auto& el : preferences_t_) 
     {
-        double distribution = 0.0;
-        for (auto &rec: preferences_t_)
-        {
-            distribution += rec.second;
-            if (distribution < 0 || distribution > 1)
-            {
-                return nullptr;
-            }
-            if (probability <= distribution)
-            {
-                return rec.first;
-            }
-        }
-        return nullptr;
+        acc += el.second;
+        if (p <= acc) return el.first;
     }
     return nullptr;
 }
@@ -73,17 +54,18 @@ void Worker::do_work(Time t)
     {
         sending_buffer_.emplace(q_->pop());
         t_ = t;
-    } 
-    else 
+        return;
+    }
+
+    if (sending_buffer_ && t - t_ + 1 >= pd_) 
     {
-        if (t - t_ + 1 == pd_) 
+        push_package(std::move(*sending_buffer_));
+        sending_buffer_.reset();
+
+        if (!q_->empty()) 
         {
-            push_package(Package(sending_buffer_.value().get_id()));
-            sending_buffer_.reset();
-            if (!q_->empty()) 
-            {
-                sending_buffer_.emplace(q_->pop());
-            }
+            sending_buffer_.emplace(q_->pop());
+            t_ = t;
         }
     }
 }
@@ -102,15 +84,19 @@ void Ramp::deliver_goods(Time t)
 {
     if (!sending_buffer_) 
     {
-        push_package(Package());
-        sending_buffer_.emplace(id_);
+        sending_buffer_.emplace(Package());
         t_ = t;
-    } 
-    else 
+    }
+    else if (t - t_ + 1 >= di_) 
     {
-        if (t - di_ == t_) 
-        {
-            push_package(Package());
-        }
+        push_package(std::move(*sending_buffer_));
+        sending_buffer_.reset();
+
+        sending_buffer_.emplace(Package());
+        t_ = t;
     }
 }
+
+Storehouse::Storehouse(ElementID id, std::unique_ptr<IPackageStockpile> d)
+    : id_(id), d_(std::move(d))
+{}

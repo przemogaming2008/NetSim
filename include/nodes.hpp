@@ -16,6 +16,11 @@ public:
     virtual void receive_package(Package&& p) = 0;
     virtual ElementID get_id(void) const = 0;
     virtual ~IPackageReceiver() = default;
+    
+    virtual std::list<Package>::const_iterator begin() const = 0;
+    virtual std::list<Package>::const_iterator end() const = 0;
+    virtual std::list<Package>::const_iterator cbegin() const = 0;
+    virtual std::list<Package>::const_iterator cend() const = 0;
 };
 
 class ReceiverPreferences
@@ -51,10 +56,10 @@ public:
     void send_package();
     const std::optional<Package>& get_sending_buffer() const { return sending_buffer_; };
     
+    ReceiverPreferences receiver_preferences_;
 protected:
     void push_package(Package&& moved) { sending_buffer_.emplace(std::move(moved)); };
     
-    ReceiverPreferences receiver_preferences_;
     std::optional<Package> sending_buffer_ = std::nullopt;
 };
 
@@ -71,6 +76,11 @@ public:
     TimeOffset get_processing_duration() const { return pd_; };
     TimeOffset get_package_processing_start_time() const { return t_; };
 
+    std::list<Package>::const_iterator begin() const override { return q_->cbegin(); }
+    std::list<Package>::const_iterator end() const override { return q_->cend(); }
+    std::list<Package>::const_iterator cbegin() const override { return q_->cbegin(); }
+    std::list<Package>::const_iterator cend() const override { return q_->cend(); }
+
 private:
     ElementID id_;
     TimeOffset pd_;
@@ -83,9 +93,18 @@ class Storehouse : public IPackageReceiver
 public:
     Storehouse(ElementID id,
     std::unique_ptr<IPackageStockpile> d);
-
+    
+    Storehouse(ElementID id) 
+        : Storehouse(id, std::make_unique<PackageQueue>(PackageQueueType::FIFO)) {}
+    
     void receive_package(Package&& p) override;
     ElementID get_id() const override { return id_; };
+    
+    std::list<Package>::const_iterator begin() const override { return d_->cbegin(); }
+    std::list<Package>::const_iterator end() const override { return d_->cend(); }
+    std::list<Package>::const_iterator cbegin() const override { return d_->cbegin(); }
+    std::list<Package>::const_iterator cend() const override { return d_->cend(); }
+
 private:
     ElementID id_;
     std::unique_ptr<IPackageStockpile> d_;
