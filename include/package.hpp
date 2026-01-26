@@ -38,5 +38,3 @@ private:
 };
 
 #endif // PACKAGE_HPP
-
-
