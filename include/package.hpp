@@ -1,6 +1,5 @@
-
-#ifndef NETSIM_PACKAGE_HPP
-#define NETSIM_PACKAGE_HPP
+#ifndef PACKAGE_HPP
+#define PACKAGE_HPP
 
 #include "types.hpp"
 #include <set>
@@ -38,4 +37,6 @@ private:
     static ElementID get_next_id();
 };
 
-#endif // NETSIM_PACKAGE_HPP
+#endif // PACKAGE_HPP
+
+
