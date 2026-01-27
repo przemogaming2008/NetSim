@@ -1,6 +1,8 @@
 #ifndef NODES_HPP
 #define NODES_HPP
 
+#define WITH_RECEIVER_TYPE 1
+
 #include "helpers.hpp"
 #include "types.hpp"
 #include "package.hpp"
@@ -9,13 +11,17 @@
 #include <memory>
 #include <optional>
 #include <map>
-
+enum class ReceiverType {
+    WORKER, STOREHOUSE
+};
 class IPackageReceiver
 {
 public:
     virtual void receive_package(Package&& p) = 0;
     virtual ElementID get_id(void) const = 0;
     virtual ~IPackageReceiver() = default;
+    
+    virtual ReceiverType get_receiver_type() const = 0;
     
     virtual std::list<Package>::const_iterator begin() const = 0;
     virtual std::list<Package>::const_iterator end() const = 0;
@@ -71,7 +77,9 @@ public:
 
     void do_work(Time t );
     void receive_package(Package&& p) override;
-
+    
+    ReceiverType get_receiver_type() const override { return ReceiverType::WORKER; };
+    
     ElementID get_id() const override { return id_; };
     TimeOffset get_processing_duration() const { return pd_; };
     TimeOffset get_package_processing_start_time() const { return t_; };
@@ -80,7 +88,9 @@ public:
     std::list<Package>::const_iterator end() const override { return q_->cend(); }
     std::list<Package>::const_iterator cbegin() const override { return q_->cbegin(); }
     std::list<Package>::const_iterator cend() const override { return q_->cend(); }
-
+    
+    const IPackageQueue* get_queue() const { return q_.get(); }
+    IPackageQueue* get_queue() { return q_.get(); }
 private:
     ElementID id_;
     TimeOffset pd_;
@@ -96,6 +106,8 @@ public:
     
     Storehouse(ElementID id) 
         : Storehouse(id, std::make_unique<PackageQueue>(PackageQueueType::FIFO)) {}
+        
+    ReceiverType get_receiver_type() const override { return ReceiverType::STOREHOUSE; };
     
     void receive_package(Package&& p) override;
     ElementID get_id() const override { return id_; };

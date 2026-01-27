@@ -90,19 +90,22 @@ public:
     NodeCollection<Ramp>::iterator find_ramp_by_id(ElementID id) { return cont_r.find_by_id(id); }
     NodeCollection<Ramp>::const_iterator find_ramp_by_id(ElementID id) const { return cont_r.find_by_id(id); }
 
-    NodeCollection<Ramp>::const_iterator ramp_cbegin() const { return cont_r.cbegin(); }
-    NodeCollection<Ramp>::const_iterator ramp_cend() const { return cont_r.cend(); }
-
     NodeCollection<Worker>::iterator find_worker_by_id(ElementID id) { return cont_w.find_by_id(id); }
-    NodeCollection<Worker>::const_iterator worker_cend() const { return cont_w.cend(); }
+    NodeCollection<Worker>::const_iterator find_worker_by_id(ElementID id) const { return cont_w.find_by_id(id); }
 
     NodeCollection<Storehouse>::iterator find_storehouse_by_id(ElementID id) { return cont_s.find_by_id(id); }
     NodeCollection<Storehouse>::const_iterator find_storehouse_by_id(ElementID id) const { return cont_s.find_by_id(id); }
-    NodeCollection<Storehouse>::const_iterator storehouse_cbegin() const { return cont_s.cbegin(); }
-    NodeCollection<Storehouse>::const_iterator storehouse_cend() const { return cont_s.cend(); }
-    
-};
 
+    // ====== TO JEST WAŻNE DLA TESTÓW ======
+    NodeCollection<Ramp>::const_iterator ramp_cbegin() const { return cont_r.cbegin(); }
+    NodeCollection<Ramp>::const_iterator ramp_cend()   const { return cont_r.cend(); }
+
+    NodeCollection<Worker>::const_iterator worker_cbegin() const { return cont_w.cbegin(); }
+    NodeCollection<Worker>::const_iterator worker_cend()   const { return cont_w.cend(); }
+
+    NodeCollection<Storehouse>::const_iterator storehouse_cbegin() const { return cont_s.cbegin(); }
+    NodeCollection<Storehouse>::const_iterator storehouse_cend()   const { return cont_s.cend(); }
+};
 Factory load_factory_structure(std::istream& is);
 
 struct ParsedLineData {
@@ -118,4 +121,5 @@ void save_factory_structure(const Factory& factory, std::ostream& os);
 
 std::string queue_type_str(PackageQueueType type);
 
+void save_factory_structure(const Factory& factory, std::ostream& os);
 #endif // FACTORY_HPP
