@@ -1,7 +1,11 @@
 #include "factory.hpp"
 #include "nodes.hpp"
 
-
+void link_stream_fill(std::stringstream& link_stream,
+                      const PackageSender& package_sender,
+                      ElementID package_sender_id,
+                      const std::string& package_sender_name);
+                      
 bool has_reachable_storehouse(const PackageSender* sender, std::map<const PackageSender*, NodeColor>& node_colors) {
     if (node_colors[sender] == NodeColor::VERIFIED) {
         return true;
@@ -215,17 +219,56 @@ std::string queue_type_str(PackageQueueType type) {
     return "UNKNOWN";
 }
 
-void link_stream_fill(std::stringstream& link_stream, const PackageSender& package_sender, ElementID package_sender_id, std::string&& package_sender_name) {
-    auto prefs = package_sender.receiver_preferences_.get_preferences();
 
-    std::for_each(prefs.cbegin(), prefs.cend(), [&](const std::pair<IPackageReceiver*, double>& key_value) {
-        link_stream << "LINK src=" << package_sender_name << "-" << package_sender_id << " ";
-        const IPackageReceiver* package_receiver = key_value.first;
-        ReceiverType receiver_type = package_receiver->get_receiver_type();
+// ---- WŁAŚCIWA FUNKCJA ----
+void save_factory_structure(const Factory& factory, std::ostream& os)
+{
+    std::stringstream link_stream;
 
-        std::string receiver_type_str = receiver_type == ReceiverType::WORKER ? "worker" : "store";
+    std::for_each(factory.ramp_cbegin(), factory.ramp_cend(),
+        [&](const Ramp& ramp) {
+            ElementID ramp_id = ramp.get_id();
+            os << "LOADING_RAMP id=" << ramp_id << ' '
+               << "delivery-interval=" << ramp.get_delivery_interval() << '\n';
 
-        link_stream << "dest=" << receiver_type_str << "-" << package_receiver->get_id() << '\n';
-        std::cout << link_stream.str();
-    });
+            link_stream_fill(link_stream, ramp, ramp_id, "ramp");
+        });
+
+    std::for_each(factory.worker_cbegin(), factory.worker_cend(),
+        [&](const Worker& worker) {
+            PackageQueueType queue_type = worker.get_queue()->get_queue_type();
+            ElementID worker_id = worker.get_id();
+
+            os << "WORKER id=" << worker_id << ' '
+               << "processing-time=" << worker.get_processing_duration() << ' '
+               << "queue-type=" << queue_type_str(queue_type) << '\n';
+
+            link_stream_fill(link_stream, worker, worker_id, "worker");
+        });
+
+    std::for_each(factory.storehouse_cbegin(), factory.storehouse_cend(),
+        [&](const Storehouse& storehouse) {
+            os << "STOREHOUSE id=" << storehouse.get_id() << '\n';
+        });
+
+    os << link_stream.str();
+}
+void link_stream_fill(std::stringstream& link_stream,
+                      const PackageSender& package_sender,
+                      ElementID package_sender_id,
+                      const std::string& package_sender_name)
+{
+    const auto& prefs = package_sender.receiver_preferences_.get_preferences();
+
+    for (const auto& [receiver, prob] : prefs) {
+        (void)prob;
+        if (!receiver) continue;
+
+        const std::string receiver_type_str =
+            receiver->get_receiver_type() == ReceiverType::WORKER ? "worker" : "store";
+
+        link_stream << "LINK src=" << package_sender_name << "-" << package_sender_id
+                    << " dest=" << receiver_type_str << "-" << receiver->get_id()
+                    << "\n";
+    }
 }
